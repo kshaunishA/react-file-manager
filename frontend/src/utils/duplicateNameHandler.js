@@ -1,6 +1,9 @@
 export const duplicateNameHandler = (originalFileName, isDirectory, files) => {
+  console.log("handling duplicate files");
   if (files.find((f) => f.name === originalFileName)) {
-    const fileExtension = isDirectory ? "" : "." + originalFileName.split(".").pop();
+    const fileExtension = isDirectory
+      ? ""
+      : "." + originalFileName.split(".").pop();
     const fileName = isDirectory
       ? originalFileName
       : originalFileName.split(".").slice(0, -1).join(".");
@@ -11,7 +14,9 @@ export const duplicateNameHandler = (originalFileName, isDirectory, files) => {
     // Check if the number is greater than the maxFileNum, then set it to that greater number
     const fileNameRegex = new RegExp(`${fileName} \\(\\d+\\)`);
     files.forEach((f) => {
-      const fName = f.isDirectory ? f.name : f.name.split(".").slice(0, -1).join(".");
+      const fName = f.isDirectory
+        ? f.name
+        : f.name.split(".").slice(0, -1).join(".");
       if (fileNameRegex.test(fName)) {
         const fileNumStr = fName.split(`${fileName} (`).pop().slice(0, -1);
         const fileNum = parseInt(fileNumStr);
