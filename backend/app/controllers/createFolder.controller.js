@@ -27,7 +27,9 @@ const createFolder = async (req, res) => {
     //
 
     // Physical folder creation using fs
-    const fullFolderPath = path.join(__dirname, "../../public/uploads", folderPath);
+    const fullFolderPath = path.join(process.env.BASE_PATH, folderPath);
+
+    console.log("full folder path is: " + fullFolderPath);
     if (!fs.existsSync(fullFolderPath)) {
       await fs.promises.mkdir(fullFolderPath, { recursive: true });
     } else {

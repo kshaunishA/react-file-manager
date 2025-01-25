@@ -35,6 +35,8 @@ const uploadFile = async (req, res) => {
       filePath = `/${file.originalname}`;
     }
 
+    console.log("file path is: " + filePath);
+
     const newFile = new FileSystem({
       name: file.originalname,
       isDirectory: false,

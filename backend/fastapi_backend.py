@@ -63,13 +63,13 @@ class FileSystemItem(BaseModel):
 # Utility: List files/folders
 import os
 
-def list_items(base_path: str) -> List[dict]:
+def list_items(process.env.BASE_PATH: str) -> List[dict]:
     """
     List files and directories under the given base path.
     Appends '/' at the start of paths and generates preview URLs.
     """
     items = []
-    for root, dirs, files in os.walk(base_path):
+    for root, dirs, files in os.walk(process.env.BASE_PATH):
         for name in dirs + files:
             # Full path and relative path
             full_path = os.path.join(root, name)

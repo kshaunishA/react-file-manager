@@ -34,11 +34,13 @@ const renameItem = async (req, res) => {
     const parentDir = `${path.dirname(item.path)}`;
     const newPath = `${parentDir}${parentDir === "/" ? "" : "/"}${newName}`;
 
-    const oldFullPath = path.join(__dirname, "../../public/uploads", item.path);
-    const newFullPath = path.join(__dirname, "../../public/uploads", newPath);
+    const oldFullPath = path.join(process.env.BASE_PATH, item.path);
+    const newFullPath = path.join(process.env.BASE_PATH, newPath);
 
     if (fs.existsSync(newFullPath)) {
-      return res.status(400).json({ error: "A file or folder with that name already exists!" });
+      return res
+        .status(400)
+        .json({ error: "A file or folder with that name already exists!" });
     }
 
     await fs.promises.rename(oldFullPath, newFullPath);
@@ -52,7 +54,9 @@ const renameItem = async (req, res) => {
       await updateChildernPathRecursive(item);
     }
 
-    res.status(200).json({ message: "File or Folder renamed successfully!", item });
+    res
+      .status(200)
+      .json({ message: "File or Folder renamed successfully!", item });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

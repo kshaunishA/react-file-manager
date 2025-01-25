@@ -22,54 +22,66 @@ const recursiveCopy = async (sourceItem, destinationFolder) => {
   }
 };
 
-const copyItem = async (req, res) => {
-  // #swagger.summary = 'Copies file/folder(s) to the destination folder.'
-  /*  #swagger.parameters['body'] = {
-        in: 'body',
-        required: true,
-        schema: { $ref: "#/definitions/CopyItems" },
-        description: 'An array of item IDs to copy and the destination folder ID.'
-      }
-  */
-  /*  #swagger.responses[200] = {
-        schema: {message: "Item(s) copied successfully!"}
-      }  
-  */
+const getUniqueFilePath = async (basePath, fileName) => {
+  let uniquePath = path.join(basePath, fileName);
 
+  const ext = path.extname(fileName);
+  const name = path.basename(fileName, ext);
+
+  // Check if the file already exists and append "copy" if it does
+  if (await FileSystem.findOne({ path: uniquePath })) {
+    uniquePath = path.join(basePath, `${name} copy${ext}`);
+  }
+
+  return uniquePath;
+};
+
+const copyItem = async (req, res) => {
   const { sourceIds, destinationId } = req.body;
   const isRootDestination = !destinationId;
 
   if (!sourceIds || !Array.isArray(sourceIds) || sourceIds.length === 0) {
-    return res.status(400).json({ error: "Invalid request body, expected an array of sourceIds." });
+    return res
+      .status(400)
+      .json({ error: "Invalid request body, expected an array of sourceIds." });
   }
 
   try {
-    const validIds = sourceIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    const validIds = sourceIds.filter((id) =>
+      mongoose.Types.ObjectId.isValid(id)
+    );
     if (validIds.length !== sourceIds.length) {
-      return res.status(400).json({ error: "One or more of the provided sourceIds are invalid." });
+      return res
+        .status(400)
+        .json({ error: "One or more of the provided sourceIds are invalid." });
     }
 
     const sourceItems = await FileSystem.find({ _id: { $in: validIds } });
     if (sourceItems.length !== validIds.length) {
-      return res.status(404).json({ error: "One or more of the provided sourceIds do not exist." });
+      return res
+        .status(404)
+        .json({ error: "One or more of the provided sourceIds do not exist." });
     }
 
     const copyPromises = sourceItems.map(async (sourceItem) => {
-      const srcFullPath = path.join(__dirname, "../../public/uploads", sourceItem.path);
+      const srcFullPath = path.join(process.env.BASE_PATH, sourceItem.path);
+      let destFullPath;
 
       if (isRootDestination) {
-        const destFullPath = path.join(__dirname, "../../public/uploads", sourceItem.name);
+        destFullPath = await getUniqueFilePath(
+          process.env.BASE_PATH,
+          sourceItem.name
+        );
         await fs.promises.cp(srcFullPath, destFullPath, { recursive: true });
-        await recursiveCopy(sourceItem, null); // Destination Folder -> Root Folder
+        await recursiveCopy(sourceItem, null);
       } else {
         const destinationFolder = await FileSystem.findById(destinationId);
         if (!destinationFolder || !destinationFolder.isDirectory) {
           throw new Error("Invalid destinationId!");
         }
-        const destFullPath = path.join(
-          __dirname,
-          "../../public/uploads",
-          destinationFolder.path,
+
+        destFullPath = await getUniqueFilePath(
+          path.join(process.env.BASE_PATH, destinationFolder.path),
           sourceItem.name
         );
         await fs.promises.cp(srcFullPath, destFullPath, { recursive: true });

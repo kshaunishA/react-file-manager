@@ -39,24 +39,32 @@ const moveItem = async (req, res) => {
   const isRootDestination = !destinationId;
 
   if (!sourceIds || !Array.isArray(sourceIds) || sourceIds.length === 0) {
-    return res.status(400).json({ error: "Invalid request body, expected an array of sourceIds." });
+    return res
+      .status(400)
+      .json({ error: "Invalid request body, expected an array of sourceIds." });
   }
   try {
-    const validIds = sourceIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    const validIds = sourceIds.filter((id) =>
+      mongoose.Types.ObjectId.isValid(id)
+    );
     if (validIds.length !== sourceIds.length) {
-      return res.status(400).json({ error: "One or more of the provided sourceIds are invalid." });
+      return res
+        .status(400)
+        .json({ error: "One or more of the provided sourceIds are invalid." });
     }
 
     const sourceItems = await FileSystem.find({ _id: { $in: validIds } });
     if (sourceItems.length !== validIds.length) {
-      return res.status(404).json({ error: "One or more of the provided sourceIds do not exist." });
+      return res
+        .status(404)
+        .json({ error: "One or more of the provided sourceIds do not exist." });
     }
 
     const movePromises = sourceItems.map(async (sourceItem) => {
-      const srcFullPath = path.join(__dirname, "../../public/uploads", sourceItem.path);
+      const srcFullPath = path.join(process.env.BASE_PATH, sourceItem.path);
 
       if (isRootDestination) {
-        const destFullPath = path.join(__dirname, "../../public/uploads", sourceItem.name);
+        const destFullPath = path.join(process.env.BASE_PATH, sourceItem.name);
         await fs.promises.cp(srcFullPath, destFullPath, { recursive: true });
         await fs.promises.rm(srcFullPath, { recursive: true });
 
@@ -68,8 +76,7 @@ const moveItem = async (req, res) => {
         }
 
         const destFullPath = path.join(
-          __dirname,
-          "../../public/uploads",
+          process.env.BASE_PATH,
           destinationFolder.path,
           sourceItem.name
         );

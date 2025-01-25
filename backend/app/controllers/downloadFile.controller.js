@@ -20,9 +20,10 @@ const downloadFile = async (req, res) => {
     const isMultipleFiles = Array.isArray(files);
 
     if (!files || (!isSingleFile && !isMultipleFiles)) {
-      return res
-        .status(400)
-        .json({ error: "Invalid request body, expected a file ID or an array of file IDs." });
+      return res.status(400).json({
+        error:
+          "Invalid request body, expected a file ID or an array of file IDs.",
+      });
     }
 
     if (isSingleFile) {
@@ -32,9 +33,12 @@ const downloadFile = async (req, res) => {
       if (file.isDirectory) {
         files = [files];
       } else {
-        const filePath = path.join(__dirname, "../../public/uploads", file.path);
+        const filePath = path.join(process.env.BASE_PATH, file.path);
         if (fs.existsSync(filePath)) {
-          res.setHeader("Content-Disposition", `attachment; filename="${file.name}"`);
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${file.name}"`
+          );
           return res.sendFile(filePath);
         } else {
           return res.status(404).send("File not found");
@@ -44,7 +48,9 @@ const downloadFile = async (req, res) => {
 
     const multipleFiles = await FileSystem.find({ _id: { $in: files } });
     if (!multipleFiles || multipleFiles.length !== files.length) {
-      return res.status(404).json({ error: "One or more of the provided file IDs do not exist." });
+      return res
+        .status(404)
+        .json({ error: "One or more of the provided file IDs do not exist." });
     }
 
     const archive = archiver("zip", { zlib: { level: 9 } });
@@ -56,7 +62,7 @@ const downloadFile = async (req, res) => {
     archive.pipe(res);
 
     multipleFiles.forEach((file) => {
-      const filePath = path.join(__dirname, "../../public/uploads", file.path);
+      const filePath = path.join(process.env.BASE_PATH, file.path);
       if (fs.existsSync(filePath)) {
         if (file.isDirectory) {
           archive.directory(filePath, file.name);
